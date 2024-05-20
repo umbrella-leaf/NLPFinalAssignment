@@ -40,8 +40,8 @@ if __name__ == '__main__':
         inputs, labels, train_size=0.8
     )
 
-    tokenizer = BertTokenizer.from_pretrained('gpt2')
-    model = BertForSequenceClassification.from_pretrained('gpt2')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=3)
 
     model.to(device)
 
