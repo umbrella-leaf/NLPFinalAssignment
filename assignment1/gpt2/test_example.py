@@ -8,9 +8,8 @@ from transformers.adapters import AutoAdapterModel, AdapterConfig
 from training import train_epoch, evaluate
 from torch.utils.data import DataLoader
 
-
 if __name__ == '__main__':
-    #Extract arguments
+    # Extract arguments
     batch_size = 32
     learning_rate = 1e-05
     non_linearity = "swish"
@@ -61,7 +60,7 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         train_loss = train_epoch(model, train_loader, optimizer, device)
         val_loss = evaluate(model, val_loader, device)
-        print(f"Epoch {epoch+1}/{num_epochs} - Training Loss: {train_loss:.3f}, Validation Loss: {val_loss:.3f}")
+        print(f"Epoch {epoch + 1}/{num_epochs} - Training Loss: {train_loss:.3f}, Validation Loss: {val_loss:.3f}")
 
         # Check best model
         if val_loss < best_val_loss:
@@ -72,18 +71,22 @@ if __name__ == '__main__':
     model.load_state_dict(best_model_state)
 
     model.eval()
-    index = random.randint(0, len(test_dataset) - 1)
+    index = 73
     with torch.no_grad():
-        sentences = test_dataset.inputs[index]
-        label = test_dataset.labels[index]
-        print(f"Sentence1: {sentences[0]}\nSentence2: {sentences[1]}\nGround-Truth:\nRelationShip: {label}")
+        sentences = inputs_test[index:index + 1]
+        label = labels_test[index:index + 1]
+        print(f"Sentence1: {sentences[0][0]}\nSentence2: {sentences[0][1]}\nGround-Truth:\nRelationShip: {label[0]}")
 
-        input_, label = test_dataset[index]
-        input_, label = input_.to(device), label.to(device)
-        output = model(input_)
-        logit = output.logits
-        _, predicted = torch.max(logit)
-        for label_str in test_dataset.label_map:
-            if test_dataset.label_map[label_str] == predicted:
-                print(f"Predicted:\nRelationShip: {label_str}")
-                break
+        test_dataset = NLIDataset(sentences, labels, tokenizer, max_length)
+        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+        for input_, label in test_loader:
+            input_ = input_.to(device)
+            label = label.to(device)
+            output = model(input_)
+            logit = output.logits
+            _, predicted = torch.max(logit, dim=1)
+
+            for label_str in test_dataset.label_map:
+                if test_dataset.label_map[label_str] == predicted[0]:
+                    print(f"Predicted:\nRelationShip: {label_str}")
+                    break
